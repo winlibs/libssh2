@@ -49,7 +49,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="..\win32,..\include"
+				AdditionalIncludeDirectories="..\win32;..\include;..\deps\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;LIBSSH2_WIN32;_LIB"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -78,6 +78,7 @@
 				OutputFile=".\Release_dll/libssh2.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="..\deps\lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Release_dll/libssh2.pdb"
 				GenerateMapFile="true"
@@ -139,7 +140,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\win32,..\include"
+				AdditionalIncludeDirectories="..\win32;..\include;..\deps\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;LIBSSH2_WIN32;_LIB;LIBSSH2DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -166,6 +167,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile="Debug_lib\libssh2d.lib"
+				AdditionalLibraryDirectories="..\deps\lib"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
@@ -220,7 +222,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\win32,..\include"
+				AdditionalIncludeDirectories="..\win32;..\include;..\deps\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;LIBSSH2_WIN32;_LIB;LIBSSH2DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -250,6 +252,7 @@
 				OutputFile=".\Debug_dll/libssh2.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="..\deps\lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug_dll/libssh2.pdb"
 				GenerateMapFile="true"
@@ -312,7 +315,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="..\win32,..\include"
+				AdditionalIncludeDirectories="..\win32;..\include;..\deps\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;LIBSSH2_WIN32;_LIB"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -338,6 +341,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile="Release_lib\libssh2.lib"
+				AdditionalLibraryDirectories="..\deps\lib"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
