@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="9.00"
 	Name="tests"
-	ProjectGUID="{D959EC0B-A4BB-4A89-B76C-4716D045489C}"
+	ProjectGUID="{2AFF1A45-172A-4E94-9710-67542531A636}"
 	TargetFrameworkVersion="0"
 	>
 	<Platforms>
