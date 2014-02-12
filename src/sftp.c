@@ -1459,9 +1459,8 @@ static ssize_t sftp_read(LIBSSH2_SFTP_HANDLE * handle, char *buffer,
 
             switch (data[0]) {
             case SSH_FXP_STATUS:
-                /* remove the chunk we just processed keeping track of the
-                 * next one in case we need it */
-                next = _libssh2_list_next(&chunk->node);
+                /* remove the chunk we just processed */
+
                 _libssh2_list_remove(&chunk->node);
                 LIBSSH2_FREE(session, chunk);
 
@@ -1488,6 +1487,14 @@ static ssize_t sftp_read(LIBSSH2_SFTP_HANDLE * handle, char *buffer,
                 if (rc32 > (data_len - 9))
                     return _libssh2_error(session, LIBSSH2_ERROR_SFTP_PROTOCOL,
                                           "SFTP Protocol badness");
+
+                if(rc32 > chunk->len) {
+                    /* A chunk larger than we requested was returned to us.
+                       This is a protocol violation and we don't know how to
+                       deal with it. Bail out! */
+                    return _libssh2_error(session, LIBSSH2_ERROR_SFTP_PROTOCOL,
+                                          "FXP_READ response too big");
+                }
 
                 if(rc32 != chunk->len) {
                     /* a short read does not imply end of file, but we must

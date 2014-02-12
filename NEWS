@@ -1,5 +1,273 @@
    Changelog for the libssh2 project. Generated with git2news.pl
 
+Version 1.4.3 (27 Nov 2012)
+
+Daniel Stenberg (27 Nov 2012)
+- RELEASE-NOTES: fixed for 1.4.3
+
+- sftp_read: return error if a too large package arrives
+
+Peter Stuge (13 Nov 2012)
+- Only define _libssh2_dsa_*() functions when building with DSA support
+
+Guenter Knauf (8 Nov 2012)
+- Added .def file to output.
+
+Kamil Dudka (1 Nov 2012)
+- libssh2_hostkey_hash.3: update the description of return value
+  
+  The function returns NULL also if the hash algorithm is not available.
+
+Guenter Knauf (24 Oct 2012)
+- Fixed mode acciedently committed.
+
+- Ignore generated file.
+
+- Added hack to make use of Makefile.inc.
+  
+  This should avoid further maintainance of the objects list.
+
+- Fixed MSVC NMakefile.
+  
+  Added missing source files; added resource for DLL.
+
+Kamil Dudka (22 Oct 2012)
+- examples: use stderr for messages, stdout for data
+  
+  Reported by: Karel Srot
+  Bug: https://bugzilla.redhat.com/867462
+
+- openssl: do not leak memory when handling errors
+  
+  ,.. in aes_ctr_init().  Detected by Coverity.
+
+- channel: fix possible NULL dereference
+  
+  ... in libssh2_channel_get_exit_signal().  Detected by Coverity.
+
+- Revert "aes: the init function fails when OpenSSL has AES support"
+  
+  This partially reverts commit f4f2298ef3635acd031cc2ee0e71026cdcda5864.
+  
+  We need to use the EVP_aes_???_ctr() functions in FIPS mode.
+
+- crypt: use hard-wired cipher block sizes consistently
+
+- openssl: do not ignore failure of EVP_CipherInit()
+
+- kex: do not ignore failure of libssh2_md5_init()
+  
+  The MD5 algorithm is disabled when running in FIPS mode.
+
+Daniel Stenberg (21 Aug 2012)
+- [Peter Krempa brought this change]
+
+  known_hosts: Fail when parsing unknown keys in known_hosts file.
+  
+  libssh2_knownhost_readfile() silently ignored problems when reading keys
+  in unsupported formats from the known hosts file. When the file is
+  written again from the internal structures of libssh2 it gets truntcated
+  to the point where the first unknown key was located.
+  
+   * src/knownhost.c:libssh2_knownhost_readfile() - return error if key
+                                                    parsing fails
+
+- AUTHORS: synced with 42fec44c8a4
+  
+  31 recent authors added
+
+- [Dave Hayden brought this change]
+
+  compression: add support for zlib@openssh.com
+  
+  Add a "use_in_auth" flag to the LIBSSH2_COMP_METHOD struct and a
+  separate "zlib@openssh.com" method, along with checking session->state
+  for LIBSSH2_STATE_AUTHENTICATED. Appears to work on the OpenSSH servers
+  I've tried against, and it should work as before with normal zlib
+  compression.
+
+- [Dmitry Smirnov brought this change]
+
+  configure: gcrypt doesn't come with pkg-config support
+  
+  ... so use plain old -lgcrypt to the linker to link with it.
+  
+  Fixes #225
+
+- sftp_read: Value stored to 'next' is never read
+  
+  Detected by clang-analyzer
+
+- publickey_init: errors are negative, fix check
+  
+  Detected by clang-analyzer.
+
+- [Maxime Larocque brought this change]
+
+  session_free: wrong variable used for keeping state
+  
+  If libssh2_session_free is called without the channel being freed
+  previously by libssh2_channel_free a memory leak could occur.
+  
+  A mismatch of states variables in session_free() prevent the call to
+  libssh2_channel_free function. session->state member is used instead of
+  session->free_state.
+  
+  It causes a leak of around 600 bytes on every connection on my systems
+  (Linux, x64 and PPC).
+  
+  (Debugging done under contract for Accedian Networks)
+  
+  Fixes #246
+
+Guenter Knauf (29 Jun 2012)
+- Small NetWare makefile tweak.
+
+- Some small Win32 makefile fixes.
+
+Daniel Stenberg (19 Jun 2012)
+- libssh2_userauth_publickey_fromfile_ex.3: mention publickey == NULL
+
+- comp_method_zlib_decomp: handle Z_BUF_ERROR when inflating
+  
+  When using libssh2 to perform an SFTP file transfer from the "JSCAPE MFT
+  Server" (http://www.jscape.com) the transfer failed. The default JSCAPE
+  configuration is to enforce zlib compression on SSH2 sessions so the
+  session was compressed. The relevant part of the debug trace contained:
+  
+   [libssh2] 1.052750 Transport: unhandled zlib error -5
+   [libssh2] 1.052750 Failure Event: -29 - decompression failure
+  
+  The trace comes from comp_method_zlib_decomp() in comp.c. The "unhandled
+  zlib error -5" is the status returned from the zlib function
+  inflate(). The -5 status corresponds to "Z_BUF_ERROR".
+  
+  The inflate() function takes a pointer to a z_stream structure and
+  "inflates" (decompresses) as much as it can. The relevant fields of the
+  z_stream structure are:
+  
+    next_in - pointer to the input buffer containing compressed data
+    avail_in - the number of bytes available at next_in
+    next_out - pointer to the output buffer to be filled with uncompressed
+               data
+    avail_out - how much space available at next_out
+  
+  To decompress data you set up a z_stream struct with the relevant fields
+  filled in and pass it to inflate(). On return the fields will have been
+  updated so next_in and avail_in show how much compressed data is yet to
+  be processed and next_out and avail_out show how much space is left in
+  the output buffer.
+  
+  If the supplied output buffer is too small then on return there will be
+  compressed data yet to be processed (avail_in != 0) and inflate() will
+  return Z_OK. In this case the output buffer must be grown, avail_out
+  updated and inflate() called again.
+  
+  If the supplied output buffer was big enough then on return the
+  compressed data will have been exhausted (avail_in == 0) and inflate()
+  will return Z_OK, so the data has all been uncompressed.
+  
+  There is a corner case where inflate() makes no progress. That is, there
+  may be unprocessed compressed data and space available in the output
+  buffer and yet the function does nothing. In this case inflate() will
+  return Z_BUF_ERROR. From the zlib documentation and the source code it
+  is not clear under what circumstances this happens. It could be that it
+  needs to write multiple bytes (all in one go) from its internal state to
+  the output buffer before processing the next chunk of input but but
+  can't because there is not enough space (though my guesses as to the
+  cause are not really relevant). Recovery from Z_BUF_ERROR is pretty
+  simple - just grow the output buffer, update avail_out and call
+  inflate() again.
+  
+  The comp_method_zlib_decomp() function does not handle the case when
+  inflate() returns Z_BUF_ERROR. It treats it as a non-recoverable error
+  and basically aborts the session.
+  
+  Fixes #240
+
+Guenter Knauf (12 Jun 2012)
+- MinGW makefile tweaks.
+  
+  Use GNU tools when compiling on Linux.
+  Fixed dist and dev targets.
+
+- NetWare makefile tweaks.
+  
+  Changed to use Windows commandline tools instead of
+  GNU tools when compiling on Windows. Fixed dist and
+  dev targets. Enabled nlmconv error for unresolved
+  symbols.
+
+Daniel Stenberg (11 Jun 2012)
+- Revert "config.rpath: generated file, no need to keep in git"
+  
+  This reverts commit 1ac7bd09cc685755577fb2c8829adcd081e7ab3c.
+  
+  This file still used by lib/*m4 functions so we need to keep the file
+  around.
+
+- BINDINGS: added PySsh2, a Python-ctypes binding
+
+Guenter Knauf (8 Jun 2012)
+- Fixed MinGW debug build.
+
+Daniel Stenberg (5 Jun 2012)
+- BINDINGS: Added the Cocoa/Objective-C one
+  
+  ... and sorted the bindings after the languages, alphabetically
+  
+  Reported by: Mike Abdullah
+
+- BINDINGS: document the bindings we know of
+
+Guenter Knauf (4 Jun 2012)
+- Fixed LIBSSH2_INT64_T_FORMAT macro.
+  
+  Usually a format macro should hold the whole format, otherwise
+  it should be named a prefix. Also fixed usage of this macro in
+  scp.c for a signed var where it was used as prefix for unsigned.
+
+- Removed obsolete define from makefiles.
+
+- Renamed NetWare makefiles.
+
+- Renamed NetWare makefiles.
+
+- Synced MinGW makefiles with 56c64a6..39e438f.
+  
+  Also synced MinGW test makefile with b092696..f8cb874.
+
+Peter Stuge (30 May 2012)
+- Revert "sftp: Don't send attrs.permissions on read-only SSH_FXP_OPEN"
+  
+  This reverts commit 04e79e0c798674a0796be8a55f63dd92e6877790.
+
+- sftp: Don't send attrs.permissions on read-only SSH_FXP_OPEN
+  
+  This works around a protocol violation in the ProFTPD 1.3.4 mod_sftp
+  server, as reported by Will Cosgrove in:
+  
+  http://libssh2.org/mail/libssh2-devel-archive-2012-05/0079.shtml
+  
+  Based on a suggested fix by TJ Saunders in:
+  
+  http://libssh2.org/mail/libssh2-devel-archive-2012-05/0104.shtml
+
+Guenter Knauf (28 May 2012)
+- Try to detect OpenSSL build type automatically.
+  
+  Also fixed recently added libgdi32 linkage which is only
+  required when OpenSSL libs are linked statically.
+
+Daniel Stenberg (25 May 2012)
+- config.rpath: generated file, no need to keep in git
+
+Guenter Knauf (22 May 2012)
+- Updated dependency libary versions.
+
+Daniel Stenberg (18 May 2012)
+- 1.4.3: towards the future
+
 Version 1.4.2 (18 May 2012)
 
 Daniel Stenberg (18 May 2012)
@@ -4412,152 +4680,3 @@ Daniel Stenberg (30 Sep 2008)
 
 - - Based on a patch in bug #1878059 by Steven Ayre libssh2 now parses >2GB file
     sizes when downloading SCP files.
-
-- Adhere to RFC4253 better and don't use dash in the banner string. Bug #2064371
-
-- Sean Peterson's key re-exchange fix. See his long explanation on:
-  http://daniel.haxx.se/projects/libssh2/mail/libssh2-devel-archive-2008-06/0002.shtml
-
-- minor language updates
-
-- Gah, I broke Sebastian's patch when I left out the parentheses his patch
-  did contain. Added properly now.
-
-- |sftp.c:1470: warning: cast to pointer from integer of different size Another
-  reason why macros are evil: The string (which is allready char *) should be
-  cast into char * not the integer.
-  
-  Signed-off-by: Sebastian Siewior <sebastian@breakpoint.cc>
-
-Mikhail Gusarov (8 Mar 2008)
-- Added manpage for libssh2_userauth_keyboard_interactive_ex(3)
-
-Daniel Stenberg (7 Mar 2008)
-- - Mike Protts filed the bug report #1908724 that identified and fixed a problem
-    with SFTP stat on files >4GB in size. Previously it used 32bit math only.
-
-Dan Fandrich (3 Jan 2008)
-- Removed a stderr debug message that was accidentally left in (bug #1863153)
-
-Daniel Stenberg (2 Jan 2008)
-- as mentioned in bug #1841442, select wants maxfd+1 in its first argument!
-
-- corrected wrong comment and made libssh2_channel_wait_closed() return 0 as
-  documented!
-
-- oops
-
-- added libssh2_channel_wait_closed man page
-
-- remove trailing junk character
-
-Mikhail Gusarov (21 Nov 2007)
-- Fix syntax errors in libssh2_sftp_init and libssh2_sftp_open_ex manpages.
-
-Guenter Knauf (18 Nov 2007)
-- fixed 'uninitialized' compiler warnings.
-
-Daniel Stenberg (12 Nov 2007)
-- valgrind was friendly enough to point out that doing memcpy() on overlapping
-  memory areas is a very bad idea so I changed this to memmove()
-
-- add 0.18 release date
-
-- 0.19 in progress
-
-- mention Dan Fandrich and Guenter Knauf
-
-- fix three compiler warnings on comparison between signed and unsigned
-
-- Added a note about recent changes in a summarized way, added dates to the three
-  most recent releases and made many lines < 80 columns.
-
-- include specified files from the win32 dir, not everything within it since
-  that gives us CVS files too etc
-
-- Moved the check that the amount of data is larger than the blocksize to
-  only get done on the first block. Based on the bug report #1826989
-  https://sourceforge.net/tracker/?func=detail&atid=703942&aid=1826989&group_id=125852
-
-- fix transfer stall bug with non-blocking transfers, by Gavrie Philipson
-
-Dan Fandrich (28 Sep 2007)
-- Stop shadowing a global declaration
-
-Daniel Stenberg (24 Sep 2007)
-- Immanuel Gregoire made libssh2_packet_read() properly deal with blocks when
-  in non-blocking state. Until this fix, libssh2 just couldn't work properly
-  on Windows while non-blocking.
-
-- oops, that was debugging code that wasn't supposed to be committed!
-
-- fix by Immanuel Gregoire, sizeof != strlen!
-
-Guenter Knauf (18 Sep 2007)
-- fixed ssize_t typedef; added a define to detect already defined ssize_t.
-
-- fix line endings to crlf and flag binary to avoid nasty conversions.
-
-Dan Fandrich (20 Aug 2007)
-- Mention the const change in libssh2_channel_setenv_ex since it's a (minor)
-  change to the API.
-
-Guenter Knauf (18 Aug 2007)
-- added link to native Win32 awk.
-
-Daniel Stenberg (12 Aug 2007)
-- The libssh2_channel_receive_window_adjust() function failed to set the state
-  variables at times and thus this function would misbehave on repeated invokes.
-
-- When we have less than blocksize data left we MUST (attempt to) read more
-  since we can't decrypt anything in that situation.
-
-Dan Fandrich (9 Aug 2007)
-- Removed unnecessary casts and added const where necessary.
-
-- Added const to varname parameter of libssh2_channel_setenv_ex
-
-- Fixed the samples to build outside the source tree.
-  Removed redundant _SOURCES lines.
-
-Daniel Stenberg (8 Aug 2007)
-- Satish Mittal and David J Sullivan fixed an infinit recv() loop in
-  libssh2_banner_receive()
-
-Guenter Knauf (8 Aug 2007)
-- fixed test makefile to generate config.h.
-
-Daniel Stenberg (6 Aug 2007)
-- we work on 0.18 now, although it might be 1.0 - who knows?
-
-- 0.17 re-indent
-
-- re-indented the source code with this script:
-  
-  indent \
-  --braces-on-if-line \
-  --braces-after-struct-decl-line \
-  --space-after-cast \
-  --line-length 79 \
-  --comment-line-length 79 \
-  --cuddle-else \
-  --no-tabs \
-  --tab-size 8 \
-  --indent-level 4 \
-  --no-space-after-for \
-  --space-after-if \
-  --space-after-while \
-  --no-space-after-function-call-names \
-  *.[ch]
-
-- 0.16 news
-
-James Housley (3 Aug 2007)
-- libssh2_userauth_list() requires the lenght of the username to be passed,
-  and not the sizeof() the array holding it.
-
-Daniel Stenberg (3 Aug 2007)
-- LIBSSH2_APINO is now gone, the sooner the better. This is gonna cause some
-  pains in apps relying on it, but it is broken by design and we should not
-  rely on it at all. Go for the LIBSSH2_VERSION_* defines instead if you need
-  to check for versions.

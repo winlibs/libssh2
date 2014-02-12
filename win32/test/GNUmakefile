@@ -9,12 +9,12 @@
 
 # Edit the path below to point to the base of your Zlib sources.
 ifndef ZLIB_PATH
-ZLIB_PATH = ../../../zlib-1.2.6
+ZLIB_PATH = ../../../zlib-1.2.7
 endif
 
 # Edit the path below to point to the base of your OpenSSL package.
 ifndef OPENSSL_PATH
-OPENSSL_PATH = ../../../openssl-0.9.8v
+OPENSSL_PATH = ../../../openssl-0.9.8x
 endif
 
 # Edit the var below to set to your architecture or set environment var.
@@ -28,8 +28,6 @@ LINK_STATIC = 1
 # Edit the vars below to change target settings.
 SAMPLES	= ../../example
 TARGETS := $(filter-out x11.exe,$(patsubst $(SAMPLES)/%.c,%.exe,$(strip $(wildcard $(SAMPLES)/*.c))))
-VERSION	= $(LIBSSH2_VERSION)
-COPYR   = (c) $(LIBSSH2_COPYRIGHT_STR)
 WWWURL	= http://www.libssh2.org/
 DESCR	= libssh2 $(subst .rc,,$(notdir $@)) $(LIBSSH2_VERSION_STR)
 #STACK	= 64000
@@ -48,28 +46,38 @@ else
 	OBJDIR	= debug
 endif
 
-# Include the version info retrieved from libssh2.h
--include $(OBJDIR)/version.inc
-
-ifeq ($(findstring /sh,$(SHELL)),/sh)
-CP      = cp -afv
-# RM    = rm -f
-MD      = mkdir
-RD      = rm -fr
-DL      = '
-DS      = /
-else
-CP      = copy
-RM      = del /q /f 2>NUL
-MD      = md 2>NUL
-RD      = rd /q /s 2>NUL
-XX      =
-DS      = $(XX)\$(XX)
-endif
 # Here you can find a native Win32 binary of the original awk:
 # http://www.gknw.net/development/prgtools/awk-20100523.zip
 AWK     = awk
 ZIP     = zip -qzr9
+
+# Platform-dependent helper tool macros
+ifeq ($(findstring /sh,$(SHELL)),/sh)
+DEL	= rm -f $1
+RMDIR	= rm -fr $1
+MKDIR	= mkdir -p $1
+COPY	= -cp -afv $1 $2
+#COPYR	= -cp -afr $1/* $2
+COPYR	= -rsync -aC $1/* $2
+TOUCH	= touch $1
+CAT	= cat
+ECHONL	= echo ""
+DL	= '
+else
+ifeq "$(OS)" "Windows_NT"
+DEL	= -del 2>NUL /q /f $(subst /,\,$1)
+RMDIR	= -rd 2>NUL /q /s $(subst /,\,$1)
+else
+DEL	= -del 2>NUL $(subst /,\,$1)
+RMDIR	= -deltree 2>NUL /y $(subst /,\,$1)
+endif
+MKDIR	= -md 2>NUL $(subst /,\,$1)
+COPY	= -copy 2>NUL /y $(subst /,\,$1) $(subst /,\,$2)
+COPYR	= -xcopy 2>NUL /q /y /e $(subst /,\,$1) $(subst /,\,$2)
+TOUCH	= copy 2>&1>NUL /b $(subst /,\,$1) +,,
+CAT	= type
+ECHONL	= $(ComSpec) /c echo.
+endif
 
 # The following line defines your compiler.
 ifdef METROWERKS
@@ -78,8 +86,11 @@ else
 	CC = $(CROSSPREFIX)gcc
 endif
 
+# Include the version info retrieved from libssh2.h
+-include $(OBJDIR)/version.inc
+
 # Global flags for all compilers
-CFLAGS	= $(OPT) -D$(DB) -DWIN32 -DLIBSSH2_WIN32 # -DHAVE_CONFIG_H
+CFLAGS	= $(OPT) -D$(DB) -DLIBSSH2_WIN32 # -DHAVE_CONFIG_H
 ifeq ($(ARCH),w64)
 CFLAGS  += -D_AMD64_
 endif
@@ -113,26 +124,53 @@ CFLAGS	+= -Wall #-Wno-unused #-pedantic
 endif
 
 INCLUDES = -I.. -I../../include
-INCLUDES += -I$(OPENSSL_PATH)/outinc -I$(OPENSSL_PATH)/outinc/openssl
-#LIBPATH += -L$(OPENSSL_PATH)/out
 LIBPATH += -L..
 
 ifdef LINK_STATIC
 	LDLIBS += -llibssh2
-	#LDLIBS += $(OPENSSL_PATH)/out/libcrypto.$(LIBEXT) $(OPENSSL_PATH)/out/libssl.$(LIBEXT)
 else
 	LDLIBS += -llibssh2dll
-	#LDLIBS += $(OPENSSL_PATH)/out/libeay32.$(LIBEXT) $(OPENSSL_PATH)/out/libssl32.$(LIBEXT)
+endif
+
+ifndef OPENSSL_INCLUDE
+	ifeq "$(wildcard $(OPENSSL_PATH)/outinc)" "$(OPENSSL_PATH)/outinc"
+		OPENSSL_INCLUDE = $(OPENSSL_PATH)/outinc
+	endif
+	ifeq "$(wildcard $(OPENSSL_PATH)/include)" "$(OPENSSL_PATH)/include"
+		OPENSSL_INCLUDE = $(OPENSSL_PATH)/include
+	endif
+endif
+ifneq "$(wildcard $(OPENSSL_INCLUDE)/openssl/opensslv.h)" "$(OPENSSL_INCLUDE)/openssl/opensslv.h"
+$(error Invalid OPENSSL_PATH: $(OPENSSL_PATH))
+endif
+INCLUDES += -I"$(OPENSSL_INCLUDE)"
+ifndef OPENSSL_LIBPATH
+	OPENSSL_LIBS_STAT = crypto ssl
+	ifeq "$(wildcard $(OPENSSL_PATH)/out)" "$(OPENSSL_PATH)/out"
+		OPENSSL_LIBPATH = $(OPENSSL_PATH)/out
+		OPENSSL_LIBS_DYN = eay32 ssl32
+	endif
+	ifeq "$(wildcard $(OPENSSL_PATH)/lib)" "$(OPENSSL_PATH)/lib"
+		OPENSSL_LIBPATH = $(OPENSSL_PATH)/lib
+		OPENSSL_LIBS_DYN = crypto.dll ssl.dll
+	endif
+endif
+ifdef LINK_STATIC
+ifdef LINK_OPENSSL_STATIC
+	LDLIBS += $(patsubst %,$(OPENSSL_LIBPATH)/lib%.$(LIBEXT), $(OPENSSL_LIBS_STAT)) -lgdi32
+else
+	LDLIBS += $(patsubst %,$(OPENSSL_LIBPATH)/lib%.$(LIBEXT), $(OPENSSL_LIBS_DYN))
+endif
 endif
 
 ifdef WITH_ZLIB
+	CFLAGS += -DLIBSSH2_HAVE_ZLIB
 	INCLUDES += -I$(ZLIB_PATH)
-	#LIBPATH = -L$(ZLIB_PATH)
-#ifdef LINK_STATIC
-#	LDLIBS += $(ZLIB_PATH)/libz.$(LIBEXT)
-#else
-#	LDLIBS += $(ZLIB_PATH)/libzdll.$(LIBEXT)
-#endif
+	ifdef LINK_ZLIB_STATIC
+		LDLIBS += $(ZLIB_PATH)/libz.$(LIBEXT)
+	else
+		LDLIBS += $(ZLIB_PATH)/libzdll.$(LIBEXT)
+	endif
 endif
 
 CFLAGS	+= $(INCLUDES)
@@ -155,17 +193,17 @@ $(OBJDIR)/version.inc: ../../include/libssh2.h $(OBJDIR)
 	@$(AWK) -f ../../get_ver.awk $< > $@
 
 objclean:
-	-$(RD) $(OBJDIR)
+	$(call RMDIR, $(OBJDIR))
 
 clean: objclean
-	-$(RM) $(TARGETS)
+	$(call DEL, $(TARGETS))
 
 $(OBJDIR):
-	$(MD) $@
+	$(call MKDIR, $@)
 
 %.exe: $(OBJDIR)/%.o $(OBJDIR)/%.res
 	@echo Linking $@
-	@-$(RM) $@
+	@$(call DEL, $@)
 	$(LD) $(LDFLAGS) $^ -o $@ $(LIBPATH) $(LDLIBS)
 
 $(OBJDIR)/%.res: $(OBJDIR)/%.rc
@@ -186,7 +224,7 @@ $(OBJDIR)/%.rc: GNUmakefile $(OBJDIR)/version.inc
 	@echo $(DL)  BEGIN$(DL) >> $@
 	@echo $(DL)    BLOCK "040904E4"$(DL) >> $@
 	@echo $(DL)    BEGIN$(DL) >> $@
-	@echo $(DL)      VALUE "LegalCopyright","$(COPYR)\0"$(DL) >> $@
+	@echo $(DL)      VALUE "LegalCopyright","\xA9 $(LIBSSH2_COPYRIGHT_STR)\0"$(DL) >> $@
 ifdef COMPANY
 	@echo $(DL)      VALUE "CompanyName","$(COMPANY)\0"$(DL) >> $@
 endif
