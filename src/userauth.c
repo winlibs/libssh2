@@ -1,6 +1,6 @@
 /* Copyright (c) 2004-2007, Sara Golemon <sarag@libssh2.org>
  * Copyright (c) 2005 Mikhail Gusarov <dottedmag@dottedmag.net>
- * Copyright (c) 2009-2011 by Daniel Stenberg
+ * Copyright (c) 2009-2014 by Daniel Stenberg
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms,
@@ -211,12 +211,13 @@ userauth_password(LIBSSH2_SESSION *session,
                sizeof(session->userauth_pswd_packet_requirev_state));
 
         /*
-         * 40 = acket_type(1) + username_len(4) + service_len(4) +
+         * 40 = packet_type(1) + username_len(4) + service_len(4) +
          * service(14)"ssh-connection" + method_len(4) + method(8)"password" +
          * chgpwdbool(1) + password_len(4) */
         session->userauth_pswd_data_len = username_len + 40;
 
-        session->userauth_pswd_data0 = ~SSH_MSG_USERAUTH_PASSWD_CHANGEREQ;
+        session->userauth_pswd_data0 =
+            (unsigned char) ~SSH_MSG_USERAUTH_PASSWD_CHANGEREQ;
 
         /* TODO: remove this alloc with a fixed buffer in the session
            struct */
@@ -276,13 +277,13 @@ userauth_password(LIBSSH2_SESSION *session,
                                           0, NULL, 0,
                                           &session->
                                           userauth_pswd_packet_requirev_state);
-            if (rc == LIBSSH2_ERROR_EAGAIN) {
-                return _libssh2_error(session, LIBSSH2_ERROR_EAGAIN,
-                                      "Would block waiting");
-            } else if (rc) {
-                session->userauth_pswd_state = libssh2_NB_state_idle;
-                return _libssh2_error(session, LIBSSH2_ERROR_TIMEOUT,
-                                      "Would block waiting");
+
+            if (rc) {
+                if (rc != LIBSSH2_ERROR_EAGAIN)
+                    session->userauth_pswd_state = libssh2_NB_state_idle;
+
+                return _libssh2_error(session, rc,
+                                      "Waiting for password response");
             }
 
             if (session->userauth_pswd_data[0] == SSH_MSG_USERAUTH_SUCCESS) {
@@ -461,7 +462,7 @@ file_read_publickey(LIBSSH2_SESSION * session, unsigned char **method,
     FILE *fd;
     char c;
     unsigned char *pubkey = NULL, *sp1, *sp2, *tmp;
-    size_t pubkey_len = 0;
+    size_t pubkey_len = 0, sp_len;
     unsigned int tmp_len;
 
     _libssh2_debug(session, LIBSSH2_TRACE_AUTH, "Loading public key file: %s",
@@ -472,8 +473,9 @@ file_read_publickey(LIBSSH2_SESSION * session, unsigned char **method,
         return _libssh2_error(session, LIBSSH2_ERROR_FILE,
                               "Unable to open public key file");
     }
-    while (!feof(fd) && 1 == fread(&c, 1, 1, fd) && c != '\r' && c != '\n')
+    while (!feof(fd) && 1 == fread(&c, 1, 1, fd) && c != '\r' && c != '\n') {
         pubkey_len++;
+    }
     if (feof(fd)) {
         /* the last character was EOF */
         pubkey_len--;
@@ -502,8 +504,9 @@ file_read_publickey(LIBSSH2_SESSION * session, unsigned char **method,
     /*
      * Remove trailing whitespace
      */
-    while (pubkey_len && isspace(pubkey[pubkey_len - 1]))
+    while (pubkey_len && isspace(pubkey[pubkey_len - 1])) {
         pubkey_len--;
+    }
 
     if (!pubkey_len) {
         LIBSSH2_FREE(session, pubkey);
@@ -519,7 +522,8 @@ file_read_publickey(LIBSSH2_SESSION * session, unsigned char **method,
 
     sp1++;
 
-    if ((sp2 = memchr(sp1, ' ', pubkey_len - (sp1 - pubkey - 1))) == NULL) {
+    sp_len = sp1 > pubkey ? (sp1 - pubkey) - 1 : 0;
+    if ((sp2 = memchr(sp1, ' ', pubkey_len - sp_len)) == NULL) {
         /* Assume that the id string is missing, but that it's okay */
         sp2 = pubkey + pubkey_len;
     }
@@ -615,7 +619,7 @@ sign_fromfile(LIBSSH2_SESSION *session, unsigned char **sig, size_t *sig_len,
     if (privkeyobj->signv(session, sig, sig_len, 1, &datavec,
                           &hostkey_abstract)) {
         if (privkeyobj->dtor) {
-            privkeyobj->dtor(session, abstract);
+            privkeyobj->dtor(session, &hostkey_abstract);
         }
         return -1;
     }
@@ -645,7 +649,7 @@ userauth_hostbased_fromfile(LIBSSH2_SESSION *session,
     if (session->userauth_host_state == libssh2_NB_state_idle) {
         const LIBSSH2_HOSTKEY_METHOD *privkeyobj;
         unsigned char *pubkeydata, *sig;
-        size_t pubkeydata_len;
+        size_t pubkeydata_len = 0;
         size_t sig_len;
         void *abstract;
         unsigned char buf[5];
@@ -1501,49 +1505,41 @@ userauth_keyboard_interactive(LIBSSH2_SESSION * session,
 
             if(session->userauth_kybd_num_prompts) {
                 session->userauth_kybd_prompts =
-                    LIBSSH2_ALLOC(session,
-                                  sizeof(LIBSSH2_USERAUTH_KBDINT_PROMPT) *
-                                  session->userauth_kybd_num_prompts);
+                    LIBSSH2_CALLOC(session,
+                                   sizeof(LIBSSH2_USERAUTH_KBDINT_PROMPT) *
+                                   session->userauth_kybd_num_prompts);
                 if (!session->userauth_kybd_prompts) {
                     _libssh2_error(session, LIBSSH2_ERROR_ALLOC,
                                    "Unable to allocate memory for "
                                    "keyboard-interactive prompts array");
                     goto cleanup;
                 }
-                memset(session->userauth_kybd_prompts, 0,
-                       sizeof(LIBSSH2_USERAUTH_KBDINT_PROMPT) *
-                       session->userauth_kybd_num_prompts);
 
                 session->userauth_kybd_responses =
-                    LIBSSH2_ALLOC(session,
-                                  sizeof(LIBSSH2_USERAUTH_KBDINT_RESPONSE) *
-                                  session->userauth_kybd_num_prompts);
+                    LIBSSH2_CALLOC(session,
+                                   sizeof(LIBSSH2_USERAUTH_KBDINT_RESPONSE) *
+                                   session->userauth_kybd_num_prompts);
                 if (!session->userauth_kybd_responses) {
                     _libssh2_error(session, LIBSSH2_ERROR_ALLOC,
                                    "Unable to allocate memory for "
                                    "keyboard-interactive responses array");
                     goto cleanup;
                 }
-                memset(session->userauth_kybd_responses, 0,
-                       sizeof(LIBSSH2_USERAUTH_KBDINT_RESPONSE) *
-                       session->userauth_kybd_num_prompts);
 
-                for(i = 0; i != session->userauth_kybd_num_prompts; ++i) {
+                for(i = 0; i < session->userauth_kybd_num_prompts; i++) {
                     /* string    prompt[1] (ISO-10646 UTF-8) */
                     session->userauth_kybd_prompts[i].length =
                         _libssh2_ntohu32(s);
                     s += 4;
                     session->userauth_kybd_prompts[i].text =
-                        LIBSSH2_ALLOC(session,
-                                      session->userauth_kybd_prompts[i].length);
+                        LIBSSH2_CALLOC(session,
+                                       session->userauth_kybd_prompts[i].length);
                     if (!session->userauth_kybd_prompts[i].text) {
                         _libssh2_error(session, LIBSSH2_ERROR_ALLOC,
                                        "Unable to allocate memory for "
                                        "keyboard-interactive prompt message");
                         goto cleanup;
                     }
-                    memcpy(session->userauth_kybd_prompts[i].text, s,
-                           session->userauth_kybd_prompts[i].length);
                     s += session->userauth_kybd_prompts[i].length;
 
                     /* boolean   echo[1] */
@@ -1569,7 +1565,7 @@ userauth_keyboard_interactive(LIBSSH2_SESSION * session,
                 + 4             /* int       num-responses */
                 ;
 
-            for(i = 0; i != session->userauth_kybd_num_prompts; ++i) {
+            for(i = 0; i < session->userauth_kybd_num_prompts; i++) {
                 /* string    response[1] (ISO-10646 UTF-8) */
                 session->userauth_kybd_packet_len +=
                     4 + session->userauth_kybd_responses[i].length;
@@ -1592,7 +1588,7 @@ userauth_keyboard_interactive(LIBSSH2_SESSION * session,
             s++;
             _libssh2_store_u32(&s, session->userauth_kybd_num_prompts);
 
-            for(i = 0; i != session->userauth_kybd_num_prompts; ++i) {
+            for(i = 0; i < session->userauth_kybd_num_prompts; i++) {
                 _libssh2_store_str(&s,
                                    session->userauth_kybd_responses[i].text,
                                    session->userauth_kybd_responses[i].length);
@@ -1628,14 +1624,14 @@ userauth_keyboard_interactive(LIBSSH2_SESSION * session,
         session->userauth_kybd_data = NULL;
 
         if (session->userauth_kybd_prompts) {
-            for(i = 0; i != session->userauth_kybd_num_prompts; ++i) {
+            for(i = 0; i < session->userauth_kybd_num_prompts; i++) {
                 LIBSSH2_FREE(session, session->userauth_kybd_prompts[i].text);
                 session->userauth_kybd_prompts[i].text = NULL;
             }
         }
 
         if (session->userauth_kybd_responses) {
-            for(i = 0; i != session->userauth_kybd_num_prompts; ++i) {
+            for(i = 0; i < session->userauth_kybd_num_prompts; i++) {
                 LIBSSH2_FREE(session,
                              session->userauth_kybd_responses[i].text);
                 session->userauth_kybd_responses[i].text = NULL;

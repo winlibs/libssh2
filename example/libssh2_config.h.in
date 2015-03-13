@@ -153,6 +153,9 @@
 /* Enable "none" MAC -- NOT RECOMMENDED */
 #undef LIBSSH2_MAC_NONE
 
+/* Use OpenSSL */
+#undef LIBSSH2_OPENSSL
+
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
 #undef LT_OBJDIR
