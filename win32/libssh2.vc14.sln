@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libssh2_dll", "libssh2_dll.vc14.vcxproj", "{17F7207C-2302-41A2-B67A-8CC800605125}"
+# Visual Studio 14
+VisualStudioVersion = 14.0.22823.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libssh2_dll.vc14", "libssh2_dll.vc14.vcxproj", "{17F7207C-2302-41A2-B67A-8CC800605125}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libssh2_lib", "libssh2_lib.vc14.vcxproj", "{9D03092A-CA07-4CB9-91F6-905A8C7A922C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libssh2_lib.vc14", "libssh2_lib.vc14.vcxproj", "{9D03092A-CA07-4CB9-91F6-905A8C7A922C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tests", "tests.vc14.vcxproj", "{2AFF1A45-172A-4E94-9710-67542531A636}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tests.vc14", "tests.vc14.vcxproj", "{2AFF1A45-172A-4E94-9710-67542531A636}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
