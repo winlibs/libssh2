@@ -815,6 +815,7 @@ with_libz_prefix
 enable_crypt_none
 enable_mac_none
 enable_gex_new
+enable_clear_memory
 enable_debug
 enable_hidden_symbols
 enable_examples_build
@@ -1466,6 +1467,7 @@ Optional Features:
   --enable-mac-none       Permit "none" MAC -- NOT RECOMMENDED
   --disable-gex-new       Disable "new" diffie-hellman-group-exchange-sha1
                           method
+  --disable-clear-memory  Disable clearing of memory before being freed
   --enable-debug          Enable pedantic and debug options
   --disable-debug         Disable debug options
   --enable-hidden-symbols Hide internal symbols in library
@@ -1903,6 +1905,52 @@ $as_echo "$ac_res" >&6; }
   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
 
 } # ac_fn_c_check_func
+
+# ac_fn_c_check_decl LINENO SYMBOL VAR INCLUDES
+# ---------------------------------------------
+# Tests whether SYMBOL is declared in INCLUDES, setting cache variable VAR
+# accordingly.
+ac_fn_c_check_decl ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  as_decl_name=`echo $2|sed 's/ *(.*//'`
+  as_decl_use=`echo $2|sed -e 's/(/((/' -e 's/)/) 0&/' -e 's/,/) 0& (/g'`
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $as_decl_name is declared" >&5
+$as_echo_n "checking whether $as_decl_name is declared... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main ()
+{
+#ifndef $as_decl_name
+#ifdef __cplusplus
+  (void) $as_decl_use;
+#else
+  (void) $as_decl_name;
+#endif
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  eval "$3=yes"
+else
+  eval "$3=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_c_check_decl
 
 # ac_fn_c_check_header_mongrel LINENO HEADER VAR INCLUDES
 # -------------------------------------------------------
@@ -13515,6 +13563,7 @@ fi
 
 
 found_crypto=none
+support_clear_memory=no
 
 # Look for OpenSSL
 if test "$found_crypto" = "none" && test "$use_openssl" != "no"; then
@@ -15862,6 +15911,20 @@ fi
 
 done
 
+  ac_fn_c_check_decl "$LINENO" "SecureZeroMemory" "ac_cv_have_decl_SecureZeroMemory" "
+    #include <windows.h>
+
+"
+if test "x$ac_cv_have_decl_SecureZeroMemory" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_SECUREZEROMEMORY $ac_have_decl
+_ACEOF
+
 fi
 if test "$ac_cv_libbcrypt" = "yes"; then
 
@@ -15873,6 +15936,9 @@ $as_echo "#define LIBSSH2_WINCNG 1" >>confdefs.h
     LIBS="$LIBS -lcrypt32"
   fi
   found_crypto="Windows Cryptography API: Next Generation"
+  if test "$ac_cv_have_decl_SecureZeroMemory" = "yes"; then
+    support_clear_memory=yes
+  fi
 fi
  if test "$ac_cv_libbcrypt" = "yes"; then
   WINCNG_TRUE=
@@ -16461,6 +16527,36 @@ if test "$GEX_NEW" != "no"; then
 
 $as_echo "#define LIBSSH2_DH_GEX_NEW 1" >>confdefs.h
 
+fi
+
+# Check whether --enable-clear-memory was given.
+if test "${enable_clear_memory+set}" = set; then :
+  enableval=$enable_clear_memory; CLEAR_MEMORY=$enableval
+fi
+
+if test "$CLEAR_MEMORY" != "no"; then
+  if test "$support_clear_memory" = "yes"; then
+
+$as_echo "#define LIBSSH2_CLEAR_MEMORY 1" >>confdefs.h
+
+    enable_clear_memory=yes
+  else
+    if test "$CLEAR_MEMORY" = "yes"; then
+      as_fn_error $? "secure clearing/zeroing of memory is not supported by the selected crypto backend" "$LINENO" 5
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: secure clearing/zeroing of memory is not supported by the selected crypto backend" >&5
+$as_echo "$as_me: WARNING: secure clearing/zeroing of memory is not supported by the selected crypto backend" >&2;}
+    fi
+    enable_clear_memory=unsupported
+  fi
+else
+  if test "$support_clear_memory" = "yes"; then
+    enable_clear_memory=no
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: secure clearing/zeroing of memory is not supported by the selected crypto backend" >&5
+$as_echo "$as_me: WARNING: secure clearing/zeroing of memory is not supported by the selected crypto backend" >&2;}
+    enable_clear_memory=unsupported
+  fi
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable pedantic and debug compiler options" >&5
@@ -19789,6 +19885,7 @@ fi
   Compiler flags:   ${CFLAGS}
   Library types:    Shared=${enable_shared}, Static=${enable_static}
   Crypto library:   ${found_crypto}
+  Clear memory:     $enable_clear_memory
   Debug build:      $enable_debug
   Build examples:   $build_examples
   Path to sshd:     $ac_cv_path_SSHD (only for self-tests)
@@ -19803,6 +19900,7 @@ $as_echo "$as_me: summary of build options:
   Compiler flags:   ${CFLAGS}
   Library types:    Shared=${enable_shared}, Static=${enable_static}
   Crypto library:   ${found_crypto}
+  Clear memory:     $enable_clear_memory
   Debug build:      $enable_debug
   Build examples:   $build_examples
   Path to sshd:     $ac_cv_path_SSHD (only for self-tests)

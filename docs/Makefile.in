@@ -81,7 +81,7 @@ build_triplet = @build@
 host_triplet = @host@
 subdir = docs
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	$(dist_man_MANS) AUTHORS INSTALL TODO
+	$(dist_man_MANS) AUTHORS TODO
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/autobuild.m4 \
 	$(top_srcdir)/m4/lib-ld.m4 $(top_srcdir)/m4/lib-link.m4 \
@@ -288,7 +288,9 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-EXTRA_DIST = template.3 BINDINGS INSTALL HACKING TODO AUTHORS
+EXTRA_DIST = template.3 BINDINGS INSTALL_AUTOTOOLS INSTALL_CMAKE HACKING TODO	\
+ AUTHORS
+
 dist_man_MANS = \
 	libssh2_agent_connect.3 \
 	libssh2_agent_disconnect.3 \
@@ -455,6 +457,7 @@ dist_man_MANS = \
 	libssh2_userauth_publickey.3 \
 	libssh2_userauth_publickey_fromfile.3 \
 	libssh2_userauth_publickey_fromfile_ex.3 \
+	libssh2_userauth_publickey_frommemory.3 \
 	libssh2_version.3
 
 all: all-am

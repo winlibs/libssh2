@@ -97,6 +97,7 @@ AC_ARG_WITH(libz,
   use_libz=$withval,use_libz=auto)
 
 found_crypto=none
+support_clear_memory=no
 
 # Look for OpenSSL
 if test "$found_crypto" = "none" && test "$use_openssl" != "no"; then
@@ -141,6 +142,9 @@ if test "$found_crypto" = "none" && test "$use_wincng" != "no"; then
   AC_CHECK_HEADERS([ntdef.h ntstatus.h], [], [], [
     #include <windows.h>
   ])
+  AC_CHECK_DECLS([SecureZeroMemory], [], [], [
+    #include <windows.h>
+  ])
 fi
 if test "$ac_cv_libbcrypt" = "yes"; then
   AC_DEFINE(LIBSSH2_WINCNG, 1, [Use Windows CNG])
@@ -150,6 +154,9 @@ if test "$ac_cv_libbcrypt" = "yes"; then
     LIBS="$LIBS -lcrypt32"
   fi
   found_crypto="Windows Cryptography API: Next Generation"
+  if test "$ac_cv_have_decl_SecureZeroMemory" = "yes"; then
+    support_clear_memory=yes
+  fi
 fi
 AM_CONDITIONAL(WINCNG, test "$ac_cv_libbcrypt" = "yes")
 
@@ -195,6 +202,30 @@ AC_ARG_ENABLE(gex-new,
   [GEX_NEW=$enableval])
 if test "$GEX_NEW" != "no"; then
   AC_DEFINE(LIBSSH2_DH_GEX_NEW, 1, [Enable newer diffie-hellman-group-exchange-sha1 syntax])
+fi
+
+AC_ARG_ENABLE(clear-memory,
+  AC_HELP_STRING([--disable-clear-memory],[Disable clearing of memory before being freed]),
+  [CLEAR_MEMORY=$enableval])
+if test "$CLEAR_MEMORY" != "no"; then
+  if test "$support_clear_memory" = "yes"; then
+    AC_DEFINE(LIBSSH2_CLEAR_MEMORY, 1, [Enable clearing of memory before being freed])
+    enable_clear_memory=yes
+  else
+    if test "$CLEAR_MEMORY" = "yes"; then
+      AC_MSG_ERROR([secure clearing/zeroing of memory is not supported by the selected crypto backend])
+    else
+      AC_MSG_WARN([secure clearing/zeroing of memory is not supported by the selected crypto backend])
+    fi
+    enable_clear_memory=unsupported
+  fi
+else
+  if test "$support_clear_memory" = "yes"; then
+    enable_clear_memory=no
+  else
+    AC_MSG_WARN([secure clearing/zeroing of memory is not supported by the selected crypto backend])
+    enable_clear_memory=unsupported
+  fi
 fi
 
 dnl ************************************************************
@@ -362,6 +393,7 @@ AC_MSG_NOTICE([summary of build options:
   Compiler flags:   ${CFLAGS}
   Library types:    Shared=${enable_shared}, Static=${enable_static}
   Crypto library:   ${found_crypto}
+  Clear memory:     $enable_clear_memory
   Debug build:      $enable_debug
   Build examples:   $build_examples
   Path to sshd:     $ac_cv_path_SSHD (only for self-tests)

@@ -1,5 +1,294 @@
    Changelog for the libssh2 project. Generated with git2news.pl
 
+Version 1.6.0 (5 Jun 2015)
+
+Daniel Stenberg (5 Jun 2015)
+- RELEASE-NOTES: synced with 858930cae5c6a
+
+Marc Hoersken (19 May 2015)
+- wincng.c: fixed indentation
+
+- [sbredahl brought this change]
+
+  wincng.c: fixed memleak in (block) cipher destructor
+
+Alexander Lamaison (6 May 2015)
+- [Jakob Egger brought this change]
+
+  libssh2_channel_open: more detailed error message
+  
+  The error message returned by libssh2_channel_open in case of a server side channel open failure is now more detailed and includes the four standard error conditions in RFC 4254.
+
+- [Hannes Domani brought this change]
+
+  kex: fix libgcrypt memory leaks of bignum
+  
+  Fixes #168.
+
+Marc Hoersken (3 Apr 2015)
+- configure.ac: check for SecureZeroMemory for clear memory feature
+
+- Revert "wincng.c: fix clear memory feature compilation with mingw"
+  
+  This reverts commit 2d2744efdd0497b72b3e1ff6e732aa4c0037fc43.
+  
+  Autobuilds show that this did not solve the issue.
+  And it seems like RtlFillMemory is defined to memset,
+  which would be optimized out by some compilers.
+
+- wincng.c: fix clear memory feature compilation with mingw
+
+Alexander Lamaison (1 Apr 2015)
+- [LarsNordin-LNdata brought this change]
+
+  Enable use of OpenSSL that doesn't have DSA.
+  
+  Added #if LIBSSH2_DSA for all DSA functions.
+
+- [LarsNordin-LNdata brought this change]
+
+  Use correct no-blowfish #define with OpenSSL.
+  
+  The OpenSSL define is OPENSSL_NO_BF, not OPENSSL_NO_BLOWFISH.
+
+Marc Hoersken (25 Mar 2015)
+- configure: error if explicitly enabled clear-memory is not supported
+  
+  This takes 22bd8d81d8fab956085e2079bf8c29872455ce59 and
+  b8289b625e291bbb785ed4add31f4759241067f3 into account,
+  but still makes it enabled by default if it is supported
+  and error out in case it is unsupported and was requested.
+
+Daniel Stenberg (25 Mar 2015)
+- configure: make clear-memory default but only WARN if backend unsupported
+  
+  ... instead of previous ERROR.
+
+Marc Hoersken (24 Mar 2015)
+- wincng.h: fix warning about computed return value not being used
+
+- nonblocking examples: fix warning about unused tvdiff on Mac OS X
+
+Daniel Stenberg (24 Mar 2015)
+- openssl: fix compiler warnings
+
+- cofigure: fix --disable-clear-memory check
+
+Marc Hoersken (23 Mar 2015)
+- scp.c: improved command length calculation
+  
+  Reduced number of calls to strlen, because shell_quotearg already
+  returns the length of the resulting string (e.q. quoted path)
+  which we can add to the existing and known cmd_len.
+  Removed obsolete call to memset again, because we can put a final
+  NULL-byte at the end of the string using the calculated length.
+
+- scp.c: improved and streamlined formatting
+
+- scp.c: fix that scp_recv may transmit not initialised memory
+
+- scp.c: fix that scp_send may transmit not initialised memory
+  
+  Fixes ticket 244. Thanks Torsten.
+
+- kex: do not ignore failure of libssh2_sha1_init()
+  
+  Based upon 43b730ce56f010e9d33573fcb020df49798c1ed8.
+  Fixes ticket 290. Thanks for the suggestion, mstrsn.
+
+- wincng.h: fix return code of libssh2_md5_init()
+
+- openssl.c: fix possible segfault in case EVP_DigestInit fails
+
+- wincng.c: fix possible use of uninitialized variables
+
+- wincng.c: fix unused argument warning if clear memory is not enabled
+
+- wincng: Added explicit clear memory feature to WinCNG backend
+  
+  This re-introduces the original feature proposed during
+  the development of the WinCNG crypto backend. It still needs
+  to be added to libssh2 itself and probably other backends.
+  
+  Memory is cleared using the function SecureZeroMemory which is
+  available on Windows systems, just like the WinCNG backend.
+
+- wincng.c: fixed mixed line-endings
+
+- wincng.c: fixed use of invalid parameter types in a8d14c5dcf
+
+- wincng.c: only try to load keys corresponding to the algorithm
+
+- wincng.c: moved PEM headers into definitions
+
+- wincng.h: fixed invalid parameter name
+
+- wincng: fixed mismatch with declarations in crypto.h
+
+- userauth.c: fixed warning C6001: using uninitialized sig and sig_len
+
+- pem.c: fixed warning C6269: possible incorrect order of operations
+
+- wincng: add support for authentication keys to be passed in memory
+  
+  Based upon 18cfec8336e and daa2dfa2db.
+
+- pem.c: add _libssh2_pem_parse_memory to parse PEM from memory
+  
+  Requirement to implement 18cfec8336e for Libgcrypt and WinCNG.
+
+- pem.c: fix copy and paste mistake from 55d030089b8
+
+- userauth.c: fix another possible dereference of a null pointer
+
+- userauth.c: fix possible dereference of a null pointer
+
+- pem.c: reduce number of calls to strlen in readline
+
+Alexander Lamaison (17 Mar 2015)
+- [Will Cosgrove brought this change]
+
+  Initialise HMAC_CTX in more places.
+  
+  Missed a couple more places we init ctx to avoid openssl threading crash.
+
+- Build build breakage in WinCNG backend caused when adding libssh2_userauth_publickey_frommemory.
+  
+  The new feature isn't implemented for the WinCNG backend currently, but the WinCNG backend didn't contain any implementation of the required backend functions - even ones that returns an error.  That caused link errors.
+  
+  This change fixes the problem by providing an implementation of the backend functions that returns an error.
+
+- Fix breakage in WinCNG backend caused by introducing libssh2_hmac_ctx_init.
+  
+  The macro was defined to nothing for the libgcrypt backend, but not for WinCNG.  This brings the latter into line with the former.
+
+Daniel Stenberg (15 Mar 2015)
+- userauth_publickey_frommemory.3: add AVAILABILITY
+  
+  ... it will be added in 1.6.0
+
+- libssh2: next version will be called 1.6.0
+  
+  ... since we just added a new function.
+
+- docs: add libssh2_userauth_publickey_frommemory.3 to dist
+  
+  The function and man page were added in commit 18cfec8336e
+
+- [Jakob Egger brought this change]
+
+  direct_tcpip: Fixed channel write
+  
+  There were 3 bugs in this loop:
+  1) Started from beginning after partial writes
+  2) Aborted when 0 bytes were sent
+  3) Ignored LIBSSH2_ERROR_EAGAIN
+  
+  See also:
+  https://trac.libssh2.org/ticket/281
+  https://trac.libssh2.org/ticket/293
+
+Alexander Lamaison (15 Mar 2015)
+- [Will Cosgrove brought this change]
+
+  Must init HMAC_CTX before using it.
+  
+  Must init ctx before using it or openssl will reuse the hmac which is not thread safe and causes a crash.
+  Added libssh2_hmac_ctx_init macro.
+
+- Add continuous integration configurations.
+  
+  Linux-based CI is done by Travis CI.  Windows-based CI is done by Appveyor.
+
+- [David Calavera brought this change]
+
+  Allow authentication keys to be passed in memory.
+  
+  All credits go to Joe Turpin, I'm just reaplying and cleaning his patch:
+  http://www.libssh2.org/mail/libssh2-devel-archive-2012-01/0015.shtml
+  
+  * Use an unimplemented error for extracting keys from memory with libgcrypt.
+
+Daniel Stenberg (14 Mar 2015)
+- docs: include the renamed INSTALL* files in dist
+
+Alexander Lamaison (13 Mar 2015)
+- Prevent collisions between CMake and Autotools in examples/ and tests/.
+
+- Avoid clash between CMake build and Autotools.
+  
+  Autotools expects a configuration template file at src/libssh2_config.h.in, which buildconf generates.  But the CMake build system has its CMake-specific version of the file at this path.  This means that, if you don't run buildconf, the Autotools build will fail because it configured the wrong header template.
+  
+  See https://github.com/libssh2/libssh2/pull/8.
+
+- Merge pull request #8 from alamaison/cmake
+  
+  CMake build system.
+
+- CMake build system.
+  
+  Tested:
+   - Windows:
+      - Visual C++ 2005/2008/2010/2012/2013/MinGW-w64
+      - static/shared
+      - 32/64-bit
+      - OpenSSL/WinCNG
+      - Without zlib
+   - Linux:
+      - GCC 4.6.3/Clang 3.4
+      - static/shared
+      - 32/64-bit
+      - OpenSSL/Libgcrypt
+      - With/Without zlib
+   - MacOS X
+      - AppleClang 6.0.0
+      - static
+      - 64-bit
+      - OpenSSL
+      - Without zlib
+  
+  Conflicts:
+  	README
+
+- Man man syntax tests fail gracefully if man version is not suitable.
+
+- Return valid code from test fixture on failure.
+  
+  The sshd test fixture was returning -1 if an error occurred, but negative error codes aren't technically valid (google it).  Bash on Windows converted them to 0 which made setup failure look as though all tests were passing.
+
+- Let mansyntax.sh work regardless of where it is called from.
+
+Daniel Stenberg (12 Mar 2015)
+- [Viktor Szakáts brought this change]
+
+  mingw build: allow to pass custom CFLAGS
+  
+  Allow to pass custom `CFLAGS` options via environment variable
+  `LIBSSH2_CFLAG_EXTRAS`. Default and automatically added options of
+  `GNUmakefile` have preference over custom ones. This addition is useful
+  for passing f.e. custom CPU tuning or LTO optimization (`-flto
+  -ffat-lto-objects`) options. The only current way to do this is to edit
+  `GNUmakefile`. This patch makes it unnecessary.
+  
+  This is a mirror of similar libcurl patch:
+  https://github.com/bagder/curl/pull/136
+
+- [Will Cosgrove brought this change]
+
+  userauth: Fixed prompt text no longer being copied to the prompts struct
+  
+  Regression from 031566f9c
+
+- README: update the git repo locations
+
+- wait_socket: wrong use of difftime()
+  
+  With reversed arguments it would always return a negative value...
+  
+  Bug: https://github.com/bagder/libssh2/issues/1
+
+- bump: start working toward 1.5.1 now
+
 Version 1.5.0 (11 Mar 2015)
 
 Daniel Stenberg (11 Mar 2015)
@@ -4933,207 +5222,3 @@ Daniel Stenberg (18 Jul 2009)
 - Ben Kibbey fixed the hostline() when parsing lines using only one hostname
 
 - Merge branch 'master' of ssh://bagder@git.stuge.se/var/lib/git/libssh2
-
-- Provide a libssh2_scp_send() API for files larger than 4GB (32bit size)
-
-- Olivier Hervieu provided this x11 forwarding example. This is the version
-  after my initial cleanup that I posted to the list on May 26th 2009. It still
-  has a few ugly spots that should be cleaned up, but until then it's will at
-  least be found in the repo. For this reason I don't add this to the makefile.
-
-- New man page for libssh2_session_hostkey(3). We probably need to improve this
-  to also return the type of the key.
-
-- Add check for and use of the _REENTRANT define for Solaris so that libssh2
-  is then properly thread-safe on that OS. These autuconf macros are straight
-  from the cURL project and were mostly written by Yang Tse. They were only
-  very slightly edited by me when imported to here.
-
-- [Tor Arntsen brought this change]
-
-  Ignore generated files
-
-- use the correct #if condition for strtoll(), pointed out in bug report
-
-- define the HAVE_LIBSSH2_KNOWNHOST_API to the version number 1.1.1 to make apps
-  know that when this define exists, the API exists. And the version number can
-  be used for run-time checks. 1.1.1 is not likely to be the release version as
-  I think we'll go with 1.2 instead but 1.1.1 OR LATER should still work.
-
-- libssh2_knownhost_add() got an additional argument: 'store' so that an
-  application can get a pointer back to the internal representation of the host
-  it just added. Useful for example when the app wants to add a host, and then
-  convert that exact same host to a line for storing in a known host file.
-  'store' can also be set to NULL to simple not care.
-
-- Added a call to libssh2_knownhost_writefile()
-  
-  Updated to the slightly modified libssh2_knownhost_check() proto
-
-- "struct libssh2_knownhost" is now part of the internal struct for each known
-  host so we now only return pointers to structs instead of having the app
-  allocate a full struct
-  
-  I moved the private struct definition into knownhosts.c instead of exposing it
-  wider in libssh2_priv.h
-  
-  I thus modified the proto for two functions that previously used 'struct
-  libssh2_knownhost *' to receive data.
-
-- when a host is added, we must make sure the app also provides a key *type* even
-  though we don't use the type in this function
-
-- Added man pages for the two newest members of the knownhosts API family:
-  libssh2_knownhost_readline() and libssh2_knownhost_writeline()
-
-- introducing libssh2_knownhost_writeline() and some cleanups to use more
-  defined error codes instead of the simplified -1 previously used a little too
-  much here
-
-- I think *readline() makes a better name
-
-- clarify that the key "string" needs to be zero terminated too
-
-- introducing libssh2_knownhost_read() that makes libssh2 read a single given
-  line
-  const'ified a few args to libssh2_knownhost_add() as well
-
-- fix a warning for a comparison mixing signed and unsigned types
-
-- After review/feedback/discussions on the mailing list. Rename two functions:
-  
-  s/libssh2_knownhost_parsefile/libssh2_knownhost_readfile
-  s/libssh2_knownhost_dumpfile/libssh2_knownhost_writefile
-
-- define removed
-
-- LIBSSH2_KNOWNHOST_TYPE_DEFAULT is not a good idea, scrap it
-
-- Added the initial man pages for the 7 new functions for known host handling
-
-- first shot at implementing libssh2_knownhost_dumpfile() and some minor
-  cleanups
-
-- introducing libssh2_knownhost_get() to the public API
-
-- clarified a comment
-
-- slighty better behavior and comments
-
-- remove include since we don't use struct iovec in this file
-
-- These examples no longer need to explictly set the socket to non-blocking state
-  as libssh2 itself will always do that by itself.
-
-- add myself as copyright owner
-
-- mention conversion of code to the new linked list code
-
-- remove #if 0'ed code
-
-- clarify the fix, as it wasn't a leak
-
-- spell fix a comment
-
-- Added some clarifying comments on how the 'sftpInit_sftp' and
-  'sftpInit_channel' struct fields within the session struct are used. And made
-  sure to clear them both correctly when sftp_init() returns instead of at
-  shutdown time, as it must not touch them at shutdown time. This should make it
-  possible to properly make more than one SFTP handle.
-
-- no need for LIBSSH2_ERROR_MEMORY when LIBSSH2_ERROR_ALLOC already exist!
-  added my own copyright line too now
-
-- use LIBSSH2_ERROR_ALLOC instead of introducing a new error code
-
-- clear session->sftpInit_sftp unconditionally
-
-- Fix my recent session->sftpInit_sftp fix which wasn't correct. The memory area
-  does not need to be freed (it already gets freed) but clearing the pointer is
-  a good idea. And it should be done _after_ the channel_free() call.
-
-- add an assert to help debugging
-
-- Without CVS we must not use cvs tools to generate the changelog. I'm not
-  confident enough with git to attempt to make one so I'll just make a dummy for
-  now.
-
--  - Anonymous bug report #2795816 revealed that libssh2_sftp_shutdown() did not
-     properly free/cleanup the SFTP handle so libssh2 leaked memory and caused
-     an assert() on subsequent libssh2_sftp_init() calls on the same session.
-
-- Fix _libssh2_channel_write(): fixed the write loop to also read from the
-  transport layer better, to avoid draining the window size when sending large
-  packets. I also fixed the return code for it to return the number of bytes
-  handled in this single invoke (and not the cumulative amount).
-
-- First, only try to send max packet size *4 to channel write, as trying to send
-  much larger packages only cause internal problems and much larger allocations.
-  
-  Also fix sftp_write() when _libssh2_channel_write() returns that a packet was
-  only partially sent as that is not an error.
-  
-  Fixed a few error messages to more accurately point out the problem
-
-- If recv() returns something less than the full buffer we know we're done for
-  now, so skip looping and doing another read that then simply will cause an
-  EAGAIN as it may trick the user into believing things that aren't true.
-
-daniel (14 May 2009)
-- remove the old style as it makes little sense to mention here anymore
-
-Daniel Stenberg (12 May 2009)
-- typo
-
-- comment typo and some indent fixes
-
-- Partial fix based on the patch and discussions in #2788319
-
-- clear the passed in struct when the entry has been removed to help prevent
-  mistakes due to re-use
-
-- use a better example file name for the known_hosts file
-
-- split out the knownhost code from hostkey.c into its own separate source file
-  now: knownhost.c
-
-- this was never supposed to be added for real
-
-- My knownhost work as of right now. It works at least partly. More tests and
-  tweaks will come.
-
-- get host, user, password and command from the command line
-
-- Added ssh2_exec as a new example, showing how to run a command remotely with
-  libssh2
-
-- bug #2785173 pointed out that we really must call _libssh2_transport_read()
-  in loops until it returns < 0 when we call it, as if we just call it once we
-  may drain the socket for data and then leave unused in-memory data that we
-  won't detect because the socket is back to idle...
-
--   Markus posted a bug report about a bad 0-return from libssh2_channel_read:
-    http://libssh2.haxx.se/mail/libssh2-devel-archive-2009-04/0076.shtml
-  
-    And it was indeed a bad loop that terminated too early due to a receveived
-    close packet.
-
-- remove pointless sleeps
-
-- edited
-
--   libssh2_poll() and libssh2_poll_channel_read() are now considered and
-    documented deprecated and they will be removed at next soname bump. It also
-    saves us from fixing some rather quirky bugs in libssh2_poll()...
-
-Guenter Knauf (9 Apr 2009)
-- some minor Makefile tweaks; mainly for crosscompiling.
-
-Daniel Stenberg (6 Apr 2009)
-- Jussi Mononen pointed out we used an unsigned variable to store negative
-  values in, when a plain int is much better anyway since it matches the return
-  type.
-
-- and we're now on the 1.1.1 track
-
-- release 1.1

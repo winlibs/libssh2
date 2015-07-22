@@ -15,10 +15,13 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <sys/types.h>
-
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
@@ -272,14 +275,17 @@ int main(int argc, char *argv[])
                 goto shutdown;
             }
             wr = 0;
-            do {
-                i = libssh2_channel_write(channel, buf, len);
+            while(wr < len) {
+                i = libssh2_channel_write(channel, buf + wr, len - wr);
+                if (LIBSSH2_ERROR_EAGAIN == i) {
+                    continue;
+                }
                 if (i < 0) {
                     fprintf(stderr, "libssh2_channel_write: %d\n", i);
                     goto shutdown;
                 }
                 wr += i;
-            } while(i > 0 && wr < len);
+            }
         }
         while (1) {
             len = libssh2_channel_read(channel, buf, sizeof(buf));
