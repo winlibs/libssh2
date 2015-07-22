@@ -105,7 +105,7 @@
       <PrecompiledHeaderOutputFile>.\Release_dll/libssh2_dll.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>.\Release_dll/</AssemblerListingLocation>
       <ObjectFileName>.\Release_dll/</ObjectFileName>
-      <ProgramDataBaseFileName>.\Release_dll/</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>.\Release_dll/libssh2.pdb</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </ClCompile>
@@ -152,7 +152,7 @@
       <PrecompiledHeaderOutputFile>.\Release_dll/libssh2_dll.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>.\Release_dll/</AssemblerListingLocation>
       <ObjectFileName>.\Release_dll/</ObjectFileName>
-      <ProgramDataBaseFileName>.\Release_dll/</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>.\Release_dll/libssh2.pdb</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </ClCompile>
@@ -198,7 +198,7 @@
       <PrecompiledHeaderOutputFile>.\Debug_dll/libssh2_dll.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>.\Debug_dll/</AssemblerListingLocation>
       <ObjectFileName>.\Debug_dll/</ObjectFileName>
-      <ProgramDataBaseFileName>.\Debug_dll/</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>Debug_dll/libssh2_debug.pdb</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -213,7 +213,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\deps\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>.\Debug_dll/libssh2.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>Debug_dll/libssh2_debug.pdb</ProgramDatabaseFile>
       <GenerateMapFile>true</GenerateMapFile>
       <MapFileName>.\Debug_dll/libssh2.map</MapFileName>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -244,7 +244,7 @@
       <PrecompiledHeaderOutputFile>.\Debug_dll/libssh2_dll.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>.\Debug_dll/</AssemblerListingLocation>
       <ObjectFileName>.\Debug_dll/</ObjectFileName>
-      <ProgramDataBaseFileName>.\Debug_dll/</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>Debug_dll/libssh2_debug.pdb</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -259,7 +259,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\deps\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>.\Debug_dll/libssh2.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>Debug_dll/libssh2_debug.pdb</ProgramDatabaseFile>
       <GenerateMapFile>true</GenerateMapFile>
       <MapFileName>.\Debug_dll/libssh2.map</MapFileName>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>

@@ -90,7 +90,7 @@
       <PrecompiledHeaderOutputFile>.\Debug_lib/libssh2_lib.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>.\Debug_lib/</AssemblerListingLocation>
       <ObjectFileName>.\Debug_lib/</ObjectFileName>
-      <ProgramDataBaseFileName>.\Debug_lib/</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>Debug_lib\libssh2_a_debug.pdb</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -118,7 +118,7 @@
       <PrecompiledHeaderOutputFile>.\Debug_lib/libssh2_lib.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>.\Debug_lib/</AssemblerListingLocation>
       <ObjectFileName>.\Debug_lib/</ObjectFileName>
-      <ProgramDataBaseFileName>.\Debug_lib/</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>Debug_lib\libssh2_a_debug.pdb</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -148,7 +148,7 @@
       <PrecompiledHeaderOutputFile>.\Release_lib/libssh2_lib.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>.\Release_lib/</AssemblerListingLocation>
       <ObjectFileName>.\Release_lib/</ObjectFileName>
-      <ProgramDataBaseFileName>.\Release_lib/</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>Release_lib\libssh2_a.pdb</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </ClCompile>
@@ -178,7 +178,7 @@
       <PrecompiledHeaderOutputFile>.\Release_lib/libssh2_lib.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>.\Release_lib/</AssemblerListingLocation>
       <ObjectFileName>.\Release_lib/</ObjectFileName>
-      <ProgramDataBaseFileName>.\Release_lib/</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>Release_lib\libssh2_a.pdb</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </ClCompile>
