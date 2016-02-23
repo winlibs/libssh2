@@ -4,6 +4,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src])
 AC_CONFIG_HEADERS([src/libssh2_config.h example/libssh2_config.h])
 AM_MAINTAINER_MODE
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 dnl SED is needed by some of the tools
 AC_PATH_PROG( SED, sed, sed-was-not-found-by-configure,
@@ -159,6 +160,8 @@ if test "$ac_cv_libbcrypt" = "yes"; then
   fi
 fi
 AM_CONDITIONAL(WINCNG, test "$ac_cv_libbcrypt" = "yes")
+
+AM_CONDITIONAL(OS400QC3, false)
 
 # Check if crypto library was found
 if test "$found_crypto" = "none"; then

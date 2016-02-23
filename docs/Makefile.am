@@ -1,7 +1,7 @@
 # $Id: Makefile.am,v 1.37 2009/03/26 15:41:15 bagder Exp $
 
 EXTRA_DIST = template.3 BINDINGS INSTALL_AUTOTOOLS INSTALL_CMAKE HACKING TODO	\
- AUTHORS
+ AUTHORS CMakeLists.txt HACKING.CRYPTO
 
 dist_man_MANS = \
 	libssh2_agent_connect.3 \
@@ -89,6 +89,7 @@ dist_man_MANS = \
 	libssh2_publickey_remove_ex.3 \
 	libssh2_publickey_shutdown.3 \
 	libssh2_scp_recv.3 \
+	libssh2_scp_recv2.3 \
 	libssh2_scp_send.3 \
 	libssh2_scp_send64.3 \
 	libssh2_scp_send_ex.3 \
@@ -109,6 +110,7 @@ dist_man_MANS = \
 	libssh2_session_init_ex.3 \
 	libssh2_session_last_errno.3 \
 	libssh2_session_last_error.3 \
+	libssh2_session_set_last_error.3 \
 	libssh2_session_method_pref.3 \
 	libssh2_session_methods.3 \
 	libssh2_session_set_blocking.3 \
