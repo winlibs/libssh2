@@ -26,13 +26,13 @@
 #ifdef _MSC_VER
 #if _MSC_VER < 1900
 #define snprintf _snprintf
-#endif
 #if _MSC_VER < 1500
 #define vsnprintf _vsnprintf
 #endif
 #define strdup _strdup
 #define strncasecmp _strnicmp
 #define strcasecmp _stricmp
+#endif
 #else
 #ifndef __MINGW32__
 #define strncasecmp strnicmp
