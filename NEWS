@@ -1,5 +1,20 @@
    Changelog for the libssh2 project. Generated with git2news.pl
 
+Version 1.8.2 (25 Mar 2019)
+
+Daniel Stenberg (25 Mar 2019)
+- RELEASE-NOTES: version 1.8.2
+
+- [Will Cosgrove brought this change]
+
+  moved MAX size declarations #330
+
+- [Will Cosgrove brought this change]
+
+  Fixed misapplied patch (#327)
+  
+  Fixes for user auth
+
 Version 1.8.1 (14 Mar 2019)
 
 Will Cosgrove (14 Mar 2019)
@@ -5521,12 +5536,3 @@ Simon Josefsson (16 Nov 2009)
   
   Reported by Steven Van Ingelgem <steven@vaningelgem.be>
   in <http://thread.gmane.org/gmane.network.ssh.libssh2.devel/2566>.
-
-- Mention libssh2-style.el.
-
-- Use memmove instead of memcpy on overlapping memory areas.
-  
-  Reported by Bob Alexander <balexander@expressor-software.com> in
-  <http://thread.gmane.org/gmane.network.ssh.libssh2.devel/2530>.
-
-- Add.
