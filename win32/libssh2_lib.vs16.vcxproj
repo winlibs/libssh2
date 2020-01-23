@@ -199,6 +199,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\agent.c" />
+    <ClCompile Include="..\src\bcrypt_pbkdf.c" />
+    <ClCompile Include="..\src\blowfish.c" />
     <ClCompile Include="..\src\channel.c" />
     <ClCompile Include="..\src\comp.c" />
     <ClCompile Include="..\src\crypt.c" />
@@ -224,6 +226,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\libssh2.h" />
+    <ClInclude Include="..\src\blf.h" />
     <ClInclude Include="libssh2_config.h" />
     <ClInclude Include="..\include\libssh2_priv.h" />
     <ClInclude Include="..\include\libssh2_sftp.h" />
