@@ -7,8 +7,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libssh2_dll.vs16", "libssh2
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libssh2_lib.vs16", "libssh2_lib.vs16.vcxproj", "{9D03092A-CA07-4CB9-91F6-905A8C7A922C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tests.vs16", "tests.vs16.vcxproj", "{2AFF1A45-172A-4E94-9710-67542531A636}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -33,14 +31,6 @@ Global
 		{9D03092A-CA07-4CB9-91F6-905A8C7A922C}.Release|Win32.Build.0 = Release|Win32
 		{9D03092A-CA07-4CB9-91F6-905A8C7A922C}.Release|x64.ActiveCfg = Release|x64
 		{9D03092A-CA07-4CB9-91F6-905A8C7A922C}.Release|x64.Build.0 = Release|x64
-		{2AFF1A45-172A-4E94-9710-67542531A636}.Debug|Win32.ActiveCfg = Debug|Win32
-		{2AFF1A45-172A-4E94-9710-67542531A636}.Debug|Win32.Build.0 = Debug|Win32
-		{2AFF1A45-172A-4E94-9710-67542531A636}.Debug|x64.ActiveCfg = Debug|x64
-		{2AFF1A45-172A-4E94-9710-67542531A636}.Debug|x64.Build.0 = Debug|x64
-		{2AFF1A45-172A-4E94-9710-67542531A636}.Release|Win32.ActiveCfg = Release|Win32
-		{2AFF1A45-172A-4E94-9710-67542531A636}.Release|Win32.Build.0 = Release|Win32
-		{2AFF1A45-172A-4E94-9710-67542531A636}.Release|x64.ActiveCfg = Release|x64
-		{2AFF1A45-172A-4E94-9710-67542531A636}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
