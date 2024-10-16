@@ -1,64 +1,69 @@
-# - Try to find mbedTLS
-# Once done this will define
+# Copyright (C) The libssh2 project and its contributors.
+# SPDX-License-Identifier: BSD-3-Clause
 #
-# Read-Only variables
-#  MBEDTLS_FOUND - system has mbedTLS
-#  MBEDTLS_INCLUDE_DIR - the mbedTLS include directory
-#  MBEDTLS_LIBRARY_DIR - the mbedTLS library directory
-#  MBEDTLS_LIBRARIES - Link these to use mbedTLS
-#  MBEDTLS_LIBRARY - path to mbedTLS library
-#  MBEDX509_LIBRARY - path to mbedTLS X.509 library
-#  MBEDCRYPTO_LIBRARY - path to mbedTLS Crypto library
+###########################################################################
+# Find the mbedtls library
+#
+# Input variables:
+#
+# MBEDTLS_INCLUDE_DIR   The mbedtls include directory
+# MBEDCRYPTO_LIBRARY    Path to mbedcrypto library
+#
+# Result variables:
+#
+# MBEDTLS_FOUND         System has mbedtls
+# MBEDTLS_INCLUDE_DIRS  The mbedtls include directories
+# MBEDTLS_LIBRARIES     The mbedtls library names
+# MBEDTLS_LIBRARY_DIRS  The mbedtls library directories
+# MBEDTLS_CFLAGS        Required compiler flags
+# MBEDTLS_VERSION       Version of mbedtls
 
-FIND_PATH(MBEDTLS_INCLUDE_DIR mbedtls/version.h)
+if((UNIX OR VCPKG_TOOLCHAIN OR (MINGW AND NOT CMAKE_CROSSCOMPILING)) AND
+   NOT DEFINED MBEDTLS_INCLUDE_DIR AND
+   NOT DEFINED MBEDCRYPTO_LIBRARY)
+  find_package(PkgConfig QUIET)
+  pkg_check_modules(MBEDTLS "mbedcrypto")
+endif()
 
-IF(MBEDTLS_INCLUDE_DIR AND MBEDTLS_LIBRARIES)
-    # Already in cache, be silent
-    SET(MBEDTLS_FIND_QUIETLY TRUE)
-ENDIF()
+if(MBEDTLS_FOUND)
+  string(REPLACE ";" " " MBEDTLS_CFLAGS "${MBEDTLS_CFLAGS}")
+  message(STATUS "Found MbedTLS (via pkg-config): ${MBEDTLS_INCLUDE_DIRS} (found version \"${MBEDTLS_VERSION}\")")
+else()
+  find_path(MBEDTLS_INCLUDE_DIR NAMES "mbedtls/version.h")
+  find_library(MBEDCRYPTO_LIBRARY NAMES "mbedcrypto" "libmbedcrypto")
 
-FIND_LIBRARY(MBEDTLS_LIBRARY NAMES mbedtls libmbedtls libmbedx509)
-FIND_LIBRARY(MBEDX509_LIBRARY NAMES mbedx509 libmbedx509)
-FIND_LIBRARY(MBEDCRYPTO_LIBRARY NAMES mbedcrypto libmbedcrypto)
+  if(MBEDTLS_INCLUDE_DIR)
+    if(EXISTS "${MBEDTLS_INCLUDE_DIR}/mbedtls/build_info.h")  # 3.x
+      set(_version_header "${MBEDTLS_INCLUDE_DIR}/mbedtls/build_info.h")
+    elseif(EXISTS "${MBEDTLS_INCLUDE_DIR}/mbedtls/version.h")  # 2.x
+      set(_version_header "${MBEDTLS_INCLUDE_DIR}/mbedtls/version.h")
+    else()
+      unset(_version_header)
+    endif()
+    if(_version_header)
+      set(_version_regex "#[\t ]*define[\t ]+MBEDTLS_VERSION_STRING[\t ]+\"([0-9.]+)\"")
+      file(STRINGS "${_version_header}" _version_str REGEX "${_version_regex}")
+      string(REGEX REPLACE "${_version_regex}" "\\1" _version_str "${_version_str}")
+      set(MBEDTLS_VERSION "${_version_str}")
+      unset(_version_regex)
+      unset(_version_str)
+      unset(_version_header)
+    endif()
+  endif()
 
-IF(MBEDTLS_INCLUDE_DIR AND MBEDTLS_LIBRARY AND MBEDX509_LIBRARY AND MBEDCRYPTO_LIBRARY)
-     SET(MBEDTLS_FOUND TRUE)
-ENDIF()
+  include(FindPackageHandleStandardArgs)
+  find_package_handle_standard_args(MbedTLS
+    REQUIRED_VARS
+      MBEDTLS_INCLUDE_DIR
+      MBEDCRYPTO_LIBRARY
+    VERSION_VAR
+      MBEDTLS_VERSION
+  )
 
-IF(MBEDTLS_FOUND)
-    # split mbedTLS into -L and -l linker options, so we can set them for pkg-config
-    GET_FILENAME_COMPONENT(MBEDTLS_LIBRARY_DIR ${MBEDTLS_LIBRARY} PATH)
-    GET_FILENAME_COMPONENT(MBEDTLS_LIBRARY_FILE ${MBEDTLS_LIBRARY} NAME_WE)
-    GET_FILENAME_COMPONENT(MBEDX509_LIBRARY_FILE ${MBEDX509_LIBRARY} NAME_WE)
-    GET_FILENAME_COMPONENT(MBEDCRYPTO_LIBRARY_FILE ${MBEDCRYPTO_LIBRARY} NAME_WE)
-    STRING(REGEX REPLACE "^lib" "" MBEDTLS_LIBRARY_FILE ${MBEDTLS_LIBRARY_FILE})
-    STRING(REGEX REPLACE "^lib" "" MBEDX509_LIBRARY_FILE ${MBEDX509_LIBRARY_FILE})
-    STRING(REGEX REPLACE "^lib" "" MBEDCRYPTO_LIBRARY_FILE ${MBEDCRYPTO_LIBRARY_FILE})
-    SET(MBEDTLS_LIBRARIES "-L${MBEDTLS_LIBRARY_DIR} -l${MBEDTLS_LIBRARY_FILE} -l${MBEDX509_LIBRARY_FILE} -l${MBEDCRYPTO_LIBRARY_FILE}")
+  if(MBEDTLS_FOUND)
+    set(MBEDTLS_INCLUDE_DIRS ${MBEDTLS_INCLUDE_DIR})
+    set(MBEDTLS_LIBRARIES    ${MBEDCRYPTO_LIBRARY})
+  endif()
 
-    IF(NOT MBEDTLS_FIND_QUIETLY)
-        MESSAGE(STATUS "Found mbedTLS:")
-        FILE(READ ${MBEDTLS_INCLUDE_DIR}/mbedtls/version.h MBEDTLSCONTENT)
-        STRING(REGEX MATCH "MBEDTLS_VERSION_STRING +\"[0-9|.]+\"" MBEDTLSMATCH ${MBEDTLSCONTENT})
-        IF (MBEDTLSMATCH)
-            STRING(REGEX REPLACE "MBEDTLS_VERSION_STRING +\"([0-9|.]+)\"" "\\1" MBEDTLS_VERSION ${MBEDTLSMATCH})
-            MESSAGE(STATUS "  version ${MBEDTLS_VERSION}")
-        ENDIF(MBEDTLSMATCH)
-        MESSAGE(STATUS "  TLS: ${MBEDTLS_LIBRARY}")
-        MESSAGE(STATUS "  X509: ${MBEDX509_LIBRARY}")
-        MESSAGE(STATUS "  Crypto: ${MBEDCRYPTO_LIBRARY}")
-    ENDIF(NOT MBEDTLS_FIND_QUIETLY)
-ELSE(MBEDTLS_FOUND)
-    IF(MBEDTLS_FIND_REQUIRED)
-        MESSAGE(FATAL_ERROR "Could not find mbedTLS")
-    ENDIF(MBEDTLS_FIND_REQUIRED)
-ENDIF(MBEDTLS_FOUND)
-
-MARK_AS_ADVANCED(
-    MBEDTLS_INCLUDE_DIR
-    MBEDTLS_LIBRARY_DIR
-    MBEDTLS_LIBRARIES
-    MBEDTLS_LIBRARY
-    MBEDX509_LIBRARY
-    MBEDCRYPTO_LIBRARY
-)
+  mark_as_advanced(MBEDTLS_INCLUDE_DIR MBEDCRYPTO_LIBRARY)
+endif()
