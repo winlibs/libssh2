@@ -242,6 +242,13 @@ fullpacket(LIBSSH2_SESSION * session, int encrypted /* 1 or 0 */ )
                 unsigned char *decrypt_buffer;
                 int blocksize = session->remote.crypt->blocksize;
 
+                if(p->total_num < mac_len + 4 + (size_t)blocksize) {
+                    LIBSSH2_FREE(session, p->payload);
+                    p->payload = NULL;
+                    return LIBSSH2_ERROR_DECRYPT;
+                }
+                decrypt_size = (ssize_t)(p->total_num - mac_len - 4);
+
                 rc = decrypt(session, p->payload + 4,
                              first_block, blocksize, FIRST_BLOCK);
                 if(rc) {
@@ -249,7 +256,6 @@ fullpacket(LIBSSH2_SESSION * session, int encrypted /* 1 or 0 */ )
                 }
 
                 /* we need buffer for decrypt */
-                decrypt_size = p->total_num - mac_len - 4;
                 decrypt_buffer = LIBSSH2_ALLOC(session, decrypt_size);
                 if(!decrypt_buffer) {
                     return LIBSSH2_ERROR_ALLOC;
